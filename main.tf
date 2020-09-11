@@ -137,53 +137,28 @@ resource "aws_subnet" "public_3" {
 
 }
 ##################
-## Route tables ##
+## Internet Gateway ##
 ##################
 
-# Re-maps the "main" route table to our custom one
-resource "aws_main_route_table_association" "main_routes" {
 
-    vpc_id = "${aws_vpc.main.id}"
-    route_table_id = "${aws_route_table.private_routes.id}"
-
-}
-
-data "aws_availability_zones" "available" {}
-
-resource "aws_subnet" "nat_gateway" {
-  availability_zone = data.aws_availability_zones.available.names[0]
-  cidr_block = "10.0.4.0/24"
+resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
-    tags = {
-        VPC = "${var.vpc_name}"
-        ManagedBy = "terraform"
-    }
-}
-
-resource "aws_internet_gateway" "nat_gateway" {
-  vpc_id = aws_vpc.main.id
-    tags = {
-        VPC = "${var.vpc_name}"
-        ManagedBy = "terraform"
-    }
-}
-
-resource "aws_route_table" "nat_gateway" {
-  vpc_id = aws_vpc.main.id
-  route {
-    cidr_block = "0.0.0.0/0"
-    nat_gateway_id = aws_internet_gateway.nat_gateway.id
-  }
-}
-
-resource "aws_route_table_association" "nat_gateway" {
-  subnet_id = aws_subnet.nat_gateway.id
-  route_table_id = aws_route_table.nat_gateway.id
 }
 
 #####################################
 ## Route tables: private instances ##
 #####################################
+
+resource "aws_eip" "nat_gateway" {
+  vpc = true
+}
+
+resource "aws_nat_gateway" "nat_gateway" {
+  allocation_id = aws_eip.nat_gateway.id
+  subnet_id = aws_subnet.public_1.id
+  depends_on = [aws_internet_gateway.gw]
+}
+
 
 # Routes traffic through the NAT instance
 resource "aws_route_table" "private_routes" {
@@ -191,7 +166,7 @@ resource "aws_route_table" "private_routes" {
     vpc_id = "${aws_vpc.main.id}"
     route {
         cidr_block = "0.0.0.0/0"
-        nat_gateway_id = aws_internet_gateway.nat_gateway.id
+        nat_gateway_id = aws_nat_gateway.nat_gateway.id
     }
 
     tags = {
@@ -239,7 +214,7 @@ resource "aws_route_table" "public_routes" {
     vpc_id = "${aws_vpc.main.id}"
     route {
         cidr_block = "0.0.0.0/0"
-        nat_gateway_id = "${aws_internet_gateway.nat_gateway.id}"
+        gateway_id = "${aws_internet_gateway.gw.id}"
     }
 
     tags = {
