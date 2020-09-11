@@ -54,12 +54,12 @@ resource "aws_vpc" "main" {
     enable_dns_support = true
     enable_dns_hostnames = true
     
-    tags {
+    tags = {
         Name = "${var.vpc_name}"
         ManagedBy = "terraform"
     }
 
-    lifecycle {
+    lifecycle = {
         create_before_destroy = true
     }
 
@@ -76,7 +76,7 @@ resource "aws_subnet" "private_1" {
     cidr_block = "10.0.1.0/24"
     map_public_ip_on_launch = false
 
-    tags {
+    tags = {
         Name = "${var.vpc_name}-Private Subnet 1"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
@@ -95,13 +95,13 @@ resource "aws_subnet" "private_2" {
     cidr_block = "10.0.2.0/24"
     map_public_ip_on_launch = false
 
-    tags {
+    tags = {
         Name = "${var.vpc_name}-Private Subnet 2"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
     }
 
-    lifecycle {
+    lifecycle = {
         create_before_destroy = true
     }
 
@@ -114,13 +114,13 @@ resource "aws_subnet" "private_3" {
     cidr_block = "10.0.3.0/24"
     map_public_ip_on_launch = false
     
-    tags {
+    tags = {
         Name = "${var.vpc_name}-Private Subnet 3"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
     }
 
-    lifecycle {
+    lifecycle = {
         create_before_destroy = true
     }
     
@@ -137,7 +137,7 @@ resource "aws_subnet" "public_1" {
     cidr_block = "10.0.11.0/24"
     map_public_ip_on_launch = true
 
-    tags {
+    tags = {
         Name = "${var.vpc_name}-Public Subnet 1"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
@@ -156,7 +156,7 @@ resource "aws_subnet" "public_2" {
     cidr_block = "10.0.22.0/24"
     map_public_ip_on_launch = true
     
-    tags {
+    tags = {
         Name = "${var.vpc_name}-Public Subnet 2"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
@@ -175,7 +175,7 @@ resource "aws_subnet" "public_3" {
     cidr_block = "10.0.33.0/24"
     map_public_ip_on_launch = true
 
-    tags {
+    tags = {
         Name = "${var.vpc_name}-Public Subnet 3"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
@@ -195,7 +195,7 @@ resource "aws_internet_gateway" "gateway" {
 
     vpc_id = "${aws_vpc.main.id}"
 
-    tags {
+    tags = {
         Name = "${var.vpc_name}-Internet-Gateway"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
@@ -232,7 +232,7 @@ resource "aws_route_table" "private_routes" {
         instance_id = "${aws_instance.vpc_nat.id}"
     }
 
-    tags {
+    tags = {
         Name = "${var.vpc_name}-Private-Routing"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
@@ -280,7 +280,7 @@ resource "aws_route_table" "public_routes" {
         gateway_id = "${aws_internet_gateway.gateway.id}"
     }
 
-    tags {
+    tags = {
         Name = "${var.vpc_name}-Public-Routing"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
@@ -326,7 +326,7 @@ resource "aws_security_group" "vpc_nat" {
     vpc_id = "${aws_vpc.main.id}"
 
     # Incoming traffic from private instances
-    ingress {
+    ingress = {
         from_port = 0
         to_port = 0
         protocol = "-1"
@@ -338,14 +338,14 @@ resource "aws_security_group" "vpc_nat" {
     }
 
     # NAT'ed outgoing traffic (passes through the VPC NAT instance)
-    egress {
+    egress = {
         from_port = 0
         to_port = 0
         protocol = "-1"
         cidr_blocks = ["0.0.0.0/0"]
     }
 
-    tags {
+    tags = {
         Name = "${var.vpc_name}-NAT-Instance"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
@@ -363,7 +363,7 @@ resource "aws_key_pair" "nat_key" {
     key_name   = "${var.vpc_name}-nat"
     public_key = "${file("${var.vpc_nat_key_file}")}"
 
-    lifecycle {
+    lifecycle = {
         create_before_destroy = true
     }
 
@@ -390,7 +390,7 @@ resource "aws_instance" "vpc_nat" {
     # Key to allow SSH access
     key_name = "${aws_key_pair.nat_key.key_name}"
 
-    tags {
+    tags = {
         Name = "${var.vpc_name}-NAT-Instance"
         VPC = "${var.vpc_name}"
         ManagedBy = "terraform"
