@@ -11,35 +11,6 @@ variable "vpc_region" {
     description = "Target region for the VPC"
 }
 
-variable "vpc_nat_ami" {
-    description = "NAT instamce AMI id"
-    default = {
-        eu-west-1      = "ami-6975eb1e"
-        eu-central-1   = "ami-46073a5b"
-        us-west-1      = "ami-7da94839"
-        us-west-2      = "ami-69ae8259"
-        us-east-1      = "ami-303b1458"
-        ap-northeast-1 = "ami-03cf3903"
-        ap-southeast-1 = "ami-b49dace6"
-        ap-southeast-2 = "ami-e7ee9edd"
-        sa-east-1      = "ami-fbfa41e6"
-    }
-}
-
-variable "vpc_nat_instance_type" {
-    description = "Instance type to use for the NAT instance"
-    default = "t2.micro"
-}
-
-variable "vpc_nat_detailed_monitoring" {
-    description = "Enable detailed monitoring for the NAT instance"
-    default = "false"
-}
-
-variable "vpc_nat_key_file" {
-    description = "Path to a key file for the VPC NAT instance"
-}
-
 #########
 ## VPC ##
 #########
@@ -195,6 +166,39 @@ resource "aws_main_route_table_association" "main_routes" {
 
 }
 
+data "aws_availability_zones" "available" {}
+
+resource "aws_subnet" "nat_gateway" {
+  availability_zone = data.aws_availability_zones.available.names[0]
+  cidr_block = "10.0.2.0/24"
+  vpc_id = aws_vpc.main.id
+    tags = {
+        VPC = "${var.vpc_name}"
+        ManagedBy = "terraform"
+    }
+}
+
+resource "aws_internet_gateway" "nat_gateway" {
+  vpc_id = aws_vpc.main.id
+    tags = {
+        VPC = "${var.vpc_name}"
+        ManagedBy = "terraform"
+    }
+}
+
+resource "aws_route_table" "nat_gateway" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.nat_gateway.id
+  }
+}
+
+resource "aws_route_table_association" "nat_gateway" {
+  subnet_id = aws_subnet.nat_gateway.id
+  route_table_id = aws_route_table.nat_gateway.id
+}
+
 #####################################
 ## Route tables: private instances ##
 #####################################
@@ -205,7 +209,7 @@ resource "aws_route_table" "private_routes" {
     vpc_id = "${aws_vpc.main.id}"
     route {
         cidr_block = "0.0.0.0/0"
-        instance_id = "${aws_instance.vpc_nat.id}"
+        gateway_id = aws_internet_gateway.nat_gateway.id
     }
 
     tags = {
@@ -320,47 +324,6 @@ resource "aws_security_group" "vpc_nat" {
         protocol = "-1"
         cidr_blocks = ["0.0.0.0/0"]
     }
-
-    tags = {
-        Name = "${var.vpc_name}-NAT-Instance"
-        VPC = "${var.vpc_name}"
-        ManagedBy = "terraform"
-    }
-
-}
-
-######################
-## VPC NAT Instance ##
-######################
-
-# Import the keypair
-resource "aws_key_pair" "nat_key" {
-
-    key_name   = "${var.vpc_name}-nat"
-    public_key = "${file("${var.vpc_nat_key_file}")}"
-
-}
-
-# Create the instance
-resource "aws_instance" "vpc_nat" {
-
-    # Requires the internet gateway to be available
-    depends_on = ["aws_internet_gateway.gateway"]
-
-    # Place in the first public subnet
-    subnet_id = "${aws_subnet.public_1.id}"
-
-    ami = "${lookup(var.vpc_nat_ami, var.vpc_region)}"
-    instance_type = "${var.vpc_nat_instance_type}"
-    associate_public_ip_address = true
-    source_dest_check = false
-    vpc_security_group_ids = [
-        "${aws_security_group.vpc_nat.id}"
-    ]
-    monitoring = "${var.vpc_nat_detailed_monitoring}"
-
-    # Key to allow SSH access
-    key_name = "${aws_key_pair.nat_key.key_name}"
 
     tags = {
         Name = "${var.vpc_name}-NAT-Instance"
