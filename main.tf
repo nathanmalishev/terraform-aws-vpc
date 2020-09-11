@@ -387,7 +387,7 @@ output "vpc_private_subnets" {
 }
 
 output "vpc_private_subnet_ids" {
-    value = "${aws_subnet.private_1.id},${aws_subnet.private_2.id},${aws_subnet.private_3.id}"
+    value = [aws_subnet.private_1.id}, ${aws_subnet.private_2.id}, ${aws_subnet.private_3.id}]
 }
 
 output "vpc_public_subnets" {
