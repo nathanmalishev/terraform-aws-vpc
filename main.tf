@@ -302,7 +302,7 @@ resource "aws_security_group" "vpc_nat" {
     vpc_id = "${aws_vpc.main.id}"
 
     # Incoming traffic from private instances
-    ingress = {
+    ingress  {
         from_port = 0
         to_port = 0
         protocol = "-1"
@@ -314,7 +314,7 @@ resource "aws_security_group" "vpc_nat" {
     }
 
     # NAT'ed outgoing traffic (passes through the VPC NAT instance)
-    egress = {
+    egress  {
         from_port = 0
         to_port = 0
         protocol = "-1"
