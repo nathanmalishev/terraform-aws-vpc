@@ -136,24 +136,6 @@ resource "aws_subnet" "public_3" {
 
 
 }
-
-######################
-## Internet gateway ##
-######################
-
-resource "aws_internet_gateway" "gateway" {
-
-    vpc_id = "${aws_vpc.main.id}"
-
-    tags = {
-        Name = "${var.vpc_name}-Internet-Gateway"
-        VPC = "${var.vpc_name}"
-        ManagedBy = "terraform"
-    }
-
-
-}
-
 ##################
 ## Route tables ##
 ##################
@@ -170,7 +152,7 @@ data "aws_availability_zones" "available" {}
 
 resource "aws_subnet" "nat_gateway" {
   availability_zone = data.aws_availability_zones.available.names[0]
-  cidr_block = "10.0.2.0/24"
+  cidr_block = "10.0.4.0/24"
   vpc_id = aws_vpc.main.id
     tags = {
         VPC = "${var.vpc_name}"
@@ -190,7 +172,7 @@ resource "aws_route_table" "nat_gateway" {
   vpc_id = aws_vpc.main.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.nat_gateway.id
+    nat_gateway_id = aws_internet_gateway.nat_gateway.id
   }
 }
 
@@ -209,7 +191,7 @@ resource "aws_route_table" "private_routes" {
     vpc_id = "${aws_vpc.main.id}"
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = aws_internet_gateway.nat_gateway.id
+        nat_gateway_id = aws_internet_gateway.nat_gateway.id
     }
 
     tags = {
@@ -257,7 +239,7 @@ resource "aws_route_table" "public_routes" {
     vpc_id = "${aws_vpc.main.id}"
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = "${aws_internet_gateway.gateway.id}"
+        nat_gateway_id = "${aws_internet_gateway.nat_gateway.id}"
     }
 
     tags = {
