@@ -59,9 +59,6 @@ resource "aws_vpc" "main" {
         ManagedBy = "terraform"
     }
 
-    lifecycle = {
-        create_before_destroy = true
-    }
 
 }
 
@@ -82,9 +79,6 @@ resource "aws_subnet" "private_1" {
         ManagedBy = "terraform"
     }
 
-    lifecycle {
-        create_before_destroy = true
-    }
 
 }
 
@@ -101,9 +95,6 @@ resource "aws_subnet" "private_2" {
         ManagedBy = "terraform"
     }
 
-    lifecycle = {
-        create_before_destroy = true
-    }
 
 }
 
@@ -120,9 +111,6 @@ resource "aws_subnet" "private_3" {
         ManagedBy = "terraform"
     }
 
-    lifecycle = {
-        create_before_destroy = true
-    }
     
 }
 
@@ -143,9 +131,6 @@ resource "aws_subnet" "public_1" {
         ManagedBy = "terraform"
     }
 
-    lifecycle {
-        create_before_destroy = true
-    }
 
 }
 
@@ -162,9 +147,6 @@ resource "aws_subnet" "public_2" {
         ManagedBy = "terraform"
     }
 
-    lifecycle {
-        create_before_destroy = true
-    }
 
 }
 
@@ -181,9 +163,6 @@ resource "aws_subnet" "public_3" {
         ManagedBy = "terraform"
     }
 
-    lifecycle {
-        create_before_destroy = true
-    }
 
 }
 
@@ -201,9 +180,6 @@ resource "aws_internet_gateway" "gateway" {
         ManagedBy = "terraform"
     }
 
-    lifecycle {
-        create_before_destroy = true
-    }
 
 }
 
@@ -362,10 +338,6 @@ resource "aws_key_pair" "nat_key" {
 
     key_name   = "${var.vpc_name}-nat"
     public_key = "${file("${var.vpc_nat_key_file}")}"
-
-    lifecycle = {
-        create_before_destroy = true
-    }
 
 }
 
